@@ -45,7 +45,13 @@ exports.signup = (req, res) => {
   });
 
   user.save().then((data) => {
-    res.send({ success: true, message: "User registered successfully!", data: data });
+
+    var token = jwt.sign({ id: data._id }, config.SECRET, {
+      expiresIn: 86400, // 24 hours
+    });
+
+    res.send({ success: true, message: "User registered successfully!", data: data, token: token });
+
   }).catch((err)=>{
         if (err) {
             res.status(500).send({ success: false, message: err });
@@ -88,6 +94,7 @@ exports.signin = (req, res) => {
       });
 
       res.status(200).send({
+        success: true,
         id: user._id,
         username: user.username,
         email: user.email,
@@ -100,6 +107,16 @@ exports.signin = (req, res) => {
             return;
           }
     });
+};
+
+exports.profile = (req, res) => {
+
+  User.findOne({_id: req.userId}).select(['-password', '-_id']).then((data) => {
+    if(data){
+      res.send({ success: true, data: data });
+      return
+    }
+  });
 };
 
 exports.signout = async (req, res) => {

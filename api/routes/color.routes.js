@@ -1,4 +1,5 @@
 const controller = require("../controllers/color.controller");
+const { JWT } = require("../middlewares");
 
 module.exports = function(app) {
   app.use(function(req, res, next) {
@@ -9,7 +10,8 @@ module.exports = function(app) {
     next();
   });
 
-  app.post("/api/color/add", controller.add);
-  app.get("/api/color/get", controller.get);
+  app.post("/api/color/save", [JWT.verifyToken], controller.save);
+  app.post("/api/color/get", controller.get);
+  app.post("/api/color/comment", [JWT.verifyToken], controller.comment);
 
 };

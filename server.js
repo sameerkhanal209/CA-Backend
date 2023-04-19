@@ -1,11 +1,21 @@
 const express = require('express')
 const cors = require('cors')
 const app = express()
+const cookieSession = require("cookie-session");
+var bodyParser = require('body-parser')
 
 app.use(cors())
-app.use(express.json())
+app.use(bodyParser.json())
 
-app.use(express.urlencoded({ extended: true }));
+app.use(bodyParser.urlencoded({ extended: false }));
+
+app.use(
+    cookieSession({
+      name: "color-library-session",
+      secret: "my-secret-token",
+      httpOnly: true
+    })
+);
 
 const dbConfig = require("./api/config/db.config.js");
 const db = require("./api/models");
@@ -28,6 +38,7 @@ app.get("/", (req, res) => {
 });
 
 require("./api/routes/user.routes")(app);
+require("./api/routes/color.routes")(app);
 
 app.get("/*", (req, res) => {
     res.status(404).json({ message: "404 not found." });

@@ -1,112 +1,83 @@
-const config = require("../config/db.config");
 const db = require("../models");
 
-const User = db.user;
+const Color = db.color;
+const Saved = db.saved;
+const Comments = db.comments;
 
-var jwt = require("jsonwebtoken");
-var bcrypt = require("bcryptjs");
+exports.get = (req, res) => {
 
-exports.signup = (req, res) => {
+  if(!req.body.colorId){
+    res.send({ success: false, message: "Please enter a color id" })
+    return
+  }
 
-    if(!req.body.username){
-        res.send({ success: false, message: "Please enter an username" })
-        return
-    }
-
-    if(req.body.username.length < 4 && req.body.username.length > 20){
-        res.send({ success: false, message: "Username should be greater than 4 and less than 20." })
-        return
-    }
-
-    if(!req.body.email){
-        res.send({ success: false, message: "Please enter a email" })
-        return
-    }
-
-    if(!req.body.password){
-        res.send({ success: false, message: "Please enter a password" })
-        return
-    }
-
-    if(req.body.password < 8){
-        res.send({ success: false, message: "Password should be greater than 8." })
-        return
-    }
-
-    if(req.body.password !== req.body.confirm_password){
-        res.send({ success: false, message: "Password and confirm password doesnot match" })
-        return
-    }
-
-  const user = new User({
-    username: req.body.username,
-    email: req.body.email,
-    password: bcrypt.hashSync(req.body.password, 8),
-  });
-
-  user.save().then((data) => {
-    res.send({ success: true, message: "User registered successfully!", data: data });
+  Color.findOneAndUpdate({colorId: req.body.colorId},
+  {
+    $inc: { views: 1 }
+  },
+  {
+    upsert: true
+  }).then((data) => {
+  res.send({ success: true, message: "Color viewed successfully!", data: data });
   }).catch((err)=>{
+      if (err) {
+          res.status(500).send({ success: false, message: err });
+          return;
+      }
+  });
+};
+
+exports.save = (req, res) => {
+  if(!req.body.colorId){
+    res.send({ success: false, message: "Please enter a color id" })
+    return
+  }
+
+  Saved.findOne({colorId: req.body.colorId, savedBy: req.userId}).then((data) => {
+    if(data){
+      res.send({ success: false, message: "Color already saved!" })
+      return
+    }
+
+    Saved.create({
+      colorId: req.body.colorId,
+      savedBy: req.userId
+    }).then((data) => {
+    res.send({ success: true, message: "Color saved successfully!", data: data });
+    }).catch((err)=>{
         if (err) {
             res.status(500).send({ success: false, message: err });
             return;
         }
     });
+
+  });
 };
 
-exports.signin = (req, res) => {
 
-    if(!req.body.username){
-        res.send({ success: false, message: "Please enter an username" })
-        return
-    }
+exports.comment = (req, res) => {
 
-    if(!req.body.password){
-        res.send({ success: false, message: "Please enter a password" })
-        return
-    }
-
-  User.findOne({
-    username: req.body.username,
-  }).then((user) => {
-
-      if (!user) {
-        return res.status(404).send({ success: false, message: "User Not found." });
-      }
-
-      var passwordIsValid = bcrypt.compareSync(
-        req.body.password,
-        user.password
-      );
-
-      if (!passwordIsValid) {
-        return res.status(401).send({ success: false, message: "Invalid Password!" });
-      }
-
-      var token = jwt.sign({ id: user.id }, config.SECRET, {
-        expiresIn: 86400, // 24 hours
-      });
-
-      res.status(200).send({
-        id: user._id,
-        username: user.username,
-        email: user.email,
-        token: token
-      });
-      
-    }).catch((err)=>{
-        if (err) {
-            res.status(500).send({ success: false, message: err });
-            return;
-          }
-    });
-};
-
-exports.signout = async (req, res) => {
-  try {
-    req.session = null;
-    return res.status(200).send({ message: "You've been signed out!" });
-  } catch (err) {
-    this.next(err);
+  if(!req.body.colorId){
+    res.send({ success: false, message: "Please enter a color id" })
+    return
   }
+
+  if(!req.body.comment){
+    res.send({ success: false, message: "Please enter a comment" })
+    return
+  }
+
+  Comments.create({
+    colorId: req.body.colorId,
+    commentedBy: req.userId,
+    comment: req.body.comment
+  }).then((data) => {
+  res.send({ success: true, message: "Commented in the color successfully!", data: data });
+  }).catch((err)=>{
+      if (err) {
+          res.status(500).send({ success: false, message: err });
+          return;
+      }
+  });
+
 };
