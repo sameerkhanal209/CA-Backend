@@ -17,4 +17,8 @@ module.exports = function(app) {
   app.post("/api/auth/profile", [JWT.verifyToken], controller.profile);
 
   app.post("/api/auth/signout", controller.signout);
+
+  app.post("/api/auth/comments", controller.comments);
+
+  app.post("/api/auth/favs", controller.favs);
 };

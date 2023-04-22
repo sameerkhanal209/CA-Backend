@@ -5,6 +5,8 @@ const User = db.user;
 
 var jwt = require("jsonwebtoken");
 var bcrypt = require("bcryptjs");
+const Comments = require("../models/comments.model");
+const Saved = require("../models/saved.model");
 
 exports.signup = (req, res) => {
 
@@ -126,4 +128,53 @@ exports.signout = async (req, res) => {
   } catch (err) {
     this.next(err);
   }
+};
+
+exports.comments = (req, res) => {
+
+  User.find({username: req.body.username}).then((data) => {
+    if(data){
+
+      Comments.find({user_id: req.userId}).then((data) => {
+        if(data){
+
+          res.send({ success: true, data: data });
+          return
+
+        } else {
+          res.send({ success: false, message: "Comments Not found." });
+          return
+        }
+      });
+
+    } else {
+      res.send({ success: false, message: "User Not found." });
+      return
+    }
+  });
+};
+
+exports.favs = (req, res) => {
+
+  User.findOne({username: req.body.username}).then((dat) => {
+
+    if(dat){
+
+      Saved.find({savedBy: dat._id}).then((data) => {
+        if(data){
+
+          res.send({ success: true, data: data });
+          return
+
+        } else {
+          res.send({ success: false, message: "Comments Not found." });
+          return
+        }
+      });
+
+    } else {
+      res.send({ success: false, message: "User Not found." });
+      return
+    }
+  });
 };
